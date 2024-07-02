@@ -1,0 +1,32 @@
+version: "3.9"
+
+networks:
+  app-tier:
+    driver: bridge
+
+volumes:
+  cat_data:
+
+services:
+  cat_db:
+    container_name: cat_db
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cat_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - cat_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  flyway_cats:
+    image: flyway/flyway
+    container_name: flyway_cats
+    volumes:
+      - ./flyway/sql:/flyway/sql
+      - ./flyway/conf:/flyway/conf
+    command: [ "-url=jdbc:postgresql://cat_db:5432/cat_db", "-user=postgres", "-password=postgres", "migrate" ]
+    depends_on:
+      - cat_db
